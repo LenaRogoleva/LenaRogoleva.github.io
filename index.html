@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<script>
+    const onLoad = (evt) => {
+        const componentName = evt.target.dataset.name;
+        const element = document.createElement(componentName);
+        document.body.append(element);
+    }
+
+    const onError = (err) => {
+    }
+
+    const components = ['my-select'];
+
+    components.forEach(component => {
+        const script = document.createElement('script');
+        script.src = `./${component}.js`;
+        script.dataset.name = component;
+        script.addEventListener('load', onLoad);
+        document.head.append(script);
+    });
+</script>
+<body>
+
+</body>
+</html>
