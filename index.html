@@ -17,6 +17,27 @@
         const element = document.createElement(componentName);
 
         element.innerHTML = `
+            <style>
+                .select-popup-search {
+                  width: calc(100% - 2.5rem);
+                  padding: 0.5rem 0.75rem;
+                  margin: 0.5rem;
+                  border: 1px solid var(--border-color);
+                  border-radius: 0.25rem;
+                  font-family: inherit;
+                  font-size: 0.875rem;
+
+                  &:focus,
+                   &:hover {
+                    border-color: var(--hover-border-color);
+                    outline: none;
+                  }
+                }
+            </style>
+            <div slot="search">
+                <input class="select-popup-search"
+                       placeholder="Поиск..." />
+            </div>
             <option value="opt1">Option 1</option>
             <option value="opt2">Option 2</option>
             <option value="opt3">Option 3</option>
