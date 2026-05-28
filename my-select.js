@@ -30,7 +30,6 @@ class MySelect extends HTMLElement {
                   position: relative;
                   display: inline-block;
                   width: 18.75rem;
-                  font-family: 'Open Sans', sans-serif;
                   font-size: 0.875rem;
                   color: #222b45;
                 }
@@ -359,5 +358,4 @@ class MySelect extends HTMLElement {
     }
 }
 
-const componentName = document.currentScript.dataset.name;
-customElements.define(componentName, MySelect);
+customElements.define(document.currentScript.dataset.name, MySelect);

@@ -9,14 +9,42 @@
         :root {
             --select-popup-background: white;
         }
+        
+        body {
+            margin: 0;
+            padding: 2rem;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            font-family: 'Open Sans', sans-serif;
+        }
     </style>
 </head>
 <script>
-    const onLoad = (evt) => {
-        const componentName = evt.target.dataset.name;
+    const createElement = (componentName) => {
         const element = document.createElement(componentName);
 
-        element.innerHTML = `
+        if (componentName === 'my-panel') {
+            element.innerHTML = `
+                <div slot="header">
+                    Кастомная панель
+                </div>
+                <div slot="content">
+                    <p>Это контент панели</p>
+                    <my-select>
+                         <div slot="search">
+                            <input class="select-popup-search"
+                                   placeholder="Поиск..." />
+                         </div>
+                         <option value="opt1">Option 1</option>
+                         <option value="opt2">Option 2</option>
+                         <option value="opt3">Option 3</option>
+                    </my-select>
+                </div>
+            `;
+        } else {
+            element.innerHTML = `
             <style>
                 .select-popup-search {
                   width: calc(100% - 2.5rem);
@@ -42,21 +70,28 @@
             <option value="opt2">Option 2</option>
             <option value="opt3">Option 3</option>
         `;
+        }
         
-        document.body.append(element);
+        return element;
     }
 
-    const onError = (err) => {
-    }
+    const components = ['my-select', 'my-panel'];
 
-    const components = ['my-select'];
+    const loadPromises = components.map(component => {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = `./${component}.js`;
+            script.dataset.name = component;
+            script.addEventListener('load', () => resolve(component));
+            script.addEventListener('error', reject);
+            document.head.append(script);
+        });
+    });
 
-    components.forEach(component => {
-        const script = document.createElement('script');
-        script.src = `./${component}.js`;
-        script.dataset.name = component;
-        script.addEventListener('load', onLoad);
-        document.head.append(script);
+    Promise.all(loadPromises).then(() => {
+        components.forEach(component => {
+            document.body.append(createElement(component));
+        });
     });
 </script>
 <body>
