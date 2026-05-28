@@ -25,57 +25,93 @@
     const createElement = (componentName) => {
         const element = document.createElement(componentName);
 
-        if (componentName === 'my-panel') {
-            element.innerHTML = `
-                <div slot="header">
-                    Кастомная панель
-                </div>
-                <div slot="content">
-                    <p>Это контент панели</p>
-                    <my-select>
-                         <div slot="search">
-                            <input class="select-popup-search"
-                                   placeholder="Поиск..." />
-                         </div>
-                         <option value="opt1">Option 1</option>
-                         <option value="opt2">Option 2</option>
-                         <option value="opt3">Option 3</option>
-                    </my-select>
-                </div>
-            `;
-        } else {
-            element.innerHTML = `
-            <style>
-                .select-popup-search {
-                  width: calc(100% - 2.5rem);
-                  padding: 0.5rem 0.75rem;
-                  margin: 0.5rem;
-                  border: 1px solid var(--border-color);
-                  border-radius: 0.25rem;
-                  font-family: inherit;
-                  font-size: 0.875rem;
+        switch (componentName) {
+            case 'my-panel': {
+                element.innerHTML = `
+                    <div slot="header">
+                        Кастомная панель
+                    </div>
+                    <div slot="content">
+                        <p>Это контент панели</p>
+                        <my-select>
+                            <div slot="search">
+                                <input class="select-popup-search"
+                                    placeholder="Поиск..." />
+                            </div>
+                            <option value="opt1">Option 1</option>
+                            <option value="opt2">Option 2</option>
+                            <option value="opt3">Option 3</option>
+                        </my-select>
+                    </div>
+                `;
+                break;
+            }
 
-                  &:focus,
-                   &:hover {
-                    border-color: var(--hover-border-color);
-                    outline: none;
-                  }
-                }
-            </style>
-            <div slot="search">
-                <input class="select-popup-search"
-                       placeholder="Поиск..." />
-            </div>
-            <option value="opt1">Option 1</option>
-            <option value="opt2">Option 2</option>
-            <option value="opt3">Option 3</option>
-        `;
+            case 'my-select': {
+                element.innerHTML = `
+                    <style>
+                     .select-popup-search {
+                        width: calc(100% - 2.5rem);
+                        padding: 0.5rem 0.75rem;
+                        margin: 0.5rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 0.25rem;
+                        font-family: inherit;
+                        font-size: 0.875rem;
+
+                        &:focus,
+                        &:hover {
+                            border-color: var(--hover-border-color);
+                            outline: none;
+                        }
+                        }
+                    </style>
+                    <div slot="search">
+                        <input class="select-popup-search"
+                            placeholder="Поиск..." />
+                    </div>
+                    <option value="opt1">Option 1</option>
+                    <option value="opt2">Option 2</option>
+                    <option value="opt3">Option 3</option>
+                `;
+                break;
+            }
+
+            case 'my-card': {
+                element.innerHTML = `
+                    <style>
+                        button {
+                            padding: 0.5rem 1rem;
+                            border: 1px solid #d4d4d8;
+                            border-radius: 0.375rem;
+                            background: #ffffff;
+                            cursor: pointer;
+                            font-family: inherit;
+                            font-size: 0.875rem;
+                            transition: background-color 0.2s, border-color 0.2s;
+                        }
+
+                        button:hover {
+                            background: #f4f4f5;
+                            border-color: #a1a1aa;
+                        }
+                    </style>
+                    <p>Контент карточки</p>
+                    <div slot="footer">
+                        <button>Отмена</button>
+                        <button>Сохранить</button>
+                    </div>
+                `;
+                element.setAttribute('header', 'Карточка');
+                element.setAttribute('subheader', 'Дополнительная информация о карточке');
+                break;
+            }
         }
         
         return element;
     }
 
-    const components = ['my-select', 'my-panel'];
+    const components = ['my-select', 'my-panel', 'my-card'];
 
     const loadPromises = components.map(component => {
         return new Promise((resolve, reject) => {
