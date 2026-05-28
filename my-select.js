@@ -3,13 +3,17 @@ class MySelect extends HTMLElement {
     #selectPopup;
     #selectPopupSearch;
     #optionsBox;
+    #noResults;
     #shadow;
+    #selectedValues = new Set();
+    #allOptions = [];
 
     connectedCallback() {
         this.#shadow = this.attachShadow({ mode: 'open' });
         this.#createTemplate();
         this.#renderOptions();
         this.#eventListeners();
+        this.#updateValue();
     }
 
     /**
@@ -26,7 +30,6 @@ class MySelect extends HTMLElement {
                   position: relative;
                   display: inline-block;
                   width: 18.75rem;
-                  font-family: 'Open Sans', sans-serif;
                   font-size: 0.875rem;
                   color: #222b45;
                 }
@@ -149,13 +152,24 @@ class MySelect extends HTMLElement {
                     transform: rotate(45deg);
                   }
                 }
+                
+                .no-results {
+                  display: none;
+                  padding: 0.5rem 0.75rem;
+                  color: #8f9bb3;
+                  text-align: center;
+                  font-size: 0.875rem;
+                }
              </style>
              
-            <button class="select-button">Option 1</button>
+            <button class="select-button">Выберите опции</button>
              <div class="select-popup">
-                <input class="select-popup-search" 
-                       placeholder="Search..." />
+                <slot name="search">
+                    <input class="select-popup-search" 
+                           placeholder="Search..." />
+                </slot>
                 <div class="select-popup-options"></div>
+                <div class="no-results">Результатов не найдено</div>
              </div>
              <template id="option-template">
                 <label class="option"><input type="checkbox"/></label>
@@ -167,16 +181,17 @@ class MySelect extends HTMLElement {
         this.#selectPopup = this.#shadow.querySelector('.select-popup');
         this.#selectPopupSearch = this.#shadow.querySelector('.select-popup-search');
         this.#optionsBox = this.#shadow.querySelector('.select-popup-options');
+        this.#noResults = this.#shadow.querySelector('.no-results');
     }
 
     /**
      * Преобразовываем переданные options и удаляем оригинальные
      */
     #renderOptions() {
-        const options = [...this.querySelectorAll('option')]
+        this.#allOptions = [...this.querySelectorAll('option')]
             .map(option => ({ [option.value]: option.textContent }));
 
-        const selectPopupOptionsElement = this.#getSelectPopup(options);
+        const selectPopupOptionsElement = this.#getSelectPopup(this.#allOptions);
 
         this.querySelectorAll('option').forEach(opt => opt.remove());
 
@@ -202,10 +217,13 @@ class MySelect extends HTMLElement {
 
             const optionElement = optionTemplate.content.cloneNode(true);
             const label = optionElement.querySelector('label');
+            const checkbox = optionElement.querySelector('input[type="checkbox"]');
             
             // Заполняем данными
             label.dataset.value = value;
-             label.appendChild(document.createTextNode(labelText));
+            checkbox.dataset.value = value;
+            checkbox.checked = this.#selectedValues.has(value);
+            label.appendChild(document.createTextNode(labelText));
             
             // Добавляем в контейнер
             container.appendChild(optionElement);
@@ -214,15 +232,130 @@ class MySelect extends HTMLElement {
         return container;
     }
 
+    /**
+     * Находим инпут поиска
+     * Сначала пробуем найти слот и инпут в нем
+     * Если в слоте ничего нет, используем стандартный инпут
+     */
+    #getSearchInput() {
+        const slot = this.#shadow.querySelector('slot[name="search"]');
+        if (slot) {
+            const assignedElements = slot.assignedElements({ flatten: true });
+            for (const element of assignedElements) {
+                const input = element.querySelector ? element.querySelector('input') : null;
+                if (input) return input;
+                if (element.tagName === 'INPUT') return element;
+            }
+        }
+
+        return this.#selectPopupSearch;
+    }
+
     #eventListeners() {
         // Добавляем обработчик клика
         this.#selectButton.addEventListener('click', () => this.#openPopup());
+
+        const searchInput = this.#getSearchInput();
+        if (searchInput) {
+            searchInput.addEventListener('input', (event) => this.#filterOptions(event.target.value));
+        }
+        
+        this.#optionsBox.addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                this.#handleCheckboxChange(event.target);
+            }
+        });
+        
+        document.addEventListener('click', (event) => this.#handleOutsideClick(event));
     }
 
+    /**
+     * Открываем попап
+     */
     #openPopup() {
         this.#selectPopup.classList.toggle('open');
     }
+
+    /**
+     * Закрываем попап
+     */
+    #closePopup() {
+        this.#selectPopup.classList.remove('open');
+    }
+
+    /**
+     * Фильтруем опции в соответствии с введенной строкой в поиск
+     */
+    #filterOptions(searchText) {
+        const searchLower = searchText.toLowerCase();
+        const labels = this.#optionsBox.querySelectorAll('.option');
+
+        let hasVisibleOptions = false;
+        
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            const isShowed = labelText.includes(searchLower);
+            label.style.display = isShowed ? 'flex' : 'none';
+            if (isShowed) {
+                hasVisibleOptions = true;
+            }
+        });
+        
+        this.#noResults.style.display = hasVisibleOptions ? 'none' : 'block';
+    }
+
+    /**
+     * Обрабатываем клики по чекбоксам
+     */
+    #handleCheckboxChange(checkbox) {
+        const value = checkbox.dataset.value;
+        
+        if (checkbox.checked) {
+            this.#selectedValues.add(value);
+        } else {
+            this.#selectedValues.delete(value);
+        }
+        
+        this.#updateValue();
+        this.#updateButtonText();
+    }
+
+    /**
+     * Обновляем значение кастомного селекта
+     */
+    #updateValue() {
+        this.value = Array.from(this.#selectedValues).join(', ');
+    }
+
+    /**
+     * Обновляем визуальное отображение выбранных опций
+     */
+    #updateButtonText() {
+        if (this.#selectedValues.size === 0) {
+            this.#selectButton.textContent = 'Выберите опции';
+        } else {
+            const selectedLabels = Array.from(this.#selectedValues).map(value => {
+                const option = this.#allOptions.find(opt => Object.keys(opt)[0] === value);
+                return option ? option[value] : '';
+            });
+            this.#selectButton.textContent = selectedLabels.join(', ');
+        }
+    }
+
+    /**
+     * Обрабатываем клики вне области попапа, когда он открыт
+     * @param event
+     */
+    #handleOutsideClick(event) {
+        if (!this.#selectPopup.classList.contains('open')) {
+            return;
+        }
+        
+        const path = event.composedPath();
+        if (!path.includes(this)) {
+            this.#closePopup();
+        }
+    }
 }
 
-const componentName = document.currentScript.dataset.name;
-customElements.define(componentName, MySelect);
+customElements.define(document.currentScript.dataset.name, MySelect);
